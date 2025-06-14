@@ -9,8 +9,14 @@ def handle_registration():
         print("name already taken")
         return
     
-    pwd = input("Insert the password: ")
-    add_reg(name, pwd)
+    opt = input("do you wnat to generate a random password? (y/n): ")
+    if opt.lower() == 'y':
+        pwd = generate_random_pwd()
+        print(f"Generated password: {pwd}")
+        add_reg(name, pwd)
+    else:
+        pwd = input("Insert the password: ")
+        add_reg(name, pwd)
 
 def add_reg(name: str, pwd: str):
     if registers[name] != "":
@@ -42,3 +48,5 @@ def show_reg():
             print(f"{name}: not registered")
     print()
 
+def generate_random_pwd():
+    return ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=RANDOM_PWD_LENGTH))
