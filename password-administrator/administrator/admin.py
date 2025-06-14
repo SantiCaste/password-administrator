@@ -26,6 +26,10 @@ def add_reg(name: str, pwd: str):
     registers[name] = pwd
 
 def change_pwd(name: str):
+    if name not in registers:
+        print("User not found")
+        return
+    
     # TODO: validar input (vacío por ej)
     old_pwd = input("insert the previous password: ")
 

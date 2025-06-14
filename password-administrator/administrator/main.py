@@ -1,4 +1,4 @@
-from admin import registers, add_reg, change_pwd, show_reg, handle_registration
+from admin import change_pwd, show_reg, handle_registration
 
 
 if __name__ == "__main__":
@@ -8,9 +8,6 @@ if __name__ == "__main__":
             handle_registration()
         elif choice == "2":
             name = input("Insert the name: ")
-            if name not in registers:
-                print("User not found")
-                continue
             change_pwd(name)
         elif choice == "3":
             show_reg()
