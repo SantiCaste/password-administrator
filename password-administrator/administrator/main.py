@@ -1,9 +1,21 @@
 from admin import change_pwd, show_reg, handle_registration
 
 
+def print_banner():
+    print("\n" + "="*35)
+    print(" Password Administrator Menu")
+    print("="*35)
+    print("1. Add user")
+    print("2. Change password")
+    print("3. Show registered users")
+    print("4. Exit")
+    print("="*35)
+
 if __name__ == "__main__":
     while True:
-        choice = input("1. Add user\n2. Change password\n3. Show registered users\n4. Exit\nChoose an option: ")
+        print_banner()
+        choice = input("Choose an option (1-4): ")
+        print()
         if choice == "1":
             handle_registration()
         elif choice == "2":
@@ -12,6 +24,7 @@ if __name__ == "__main__":
         elif choice == "3":
             show_reg()
         elif choice == "4":
+            print("Exiting Password Administrator. Goodbye!\n")
             break
         else:
-            print("Invalid option, please try again.")
+            print("Invalid option, please choose a number between 1 and 4.")
