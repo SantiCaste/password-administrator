@@ -55,3 +55,18 @@ def show_reg():
 
 def generate_random_pwd():
     return ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=RANDOM_PWD_LENGTH))
+
+# measure password strength considering length and complexity
+def measure_password_strength(password: str) -> str:
+    if len(password) < 8:
+        return "Weak: Password must be at least 8 characters long.", 
+    if not any(c.isdigit() for c in password):
+        return "Weak: Password must contain at least one digit.", 
+    if not any(c.isupper() for c in password):
+        return "Weak: Password must contain at least one uppercase letter.", 
+    if not any(c.islower() for c in password):
+        return "Weak: Password must contain at least one lowercase letter.", 
+    if not any(c in string.punctuation for c in password):
+        return "Weak: Password must contain at least one special character."
+
+    return "Strong: Password meets all criteria."
