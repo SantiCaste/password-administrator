@@ -1,5 +1,16 @@
+import random, string
+from constants import RANDOM_PWD_LENGTH
 
 registers: dict
+
+def handle_registration():
+    name = input("Insert the name: ")
+    if name in registers:
+        print("name already taken")
+        return
+    
+    pwd = input("Insert the password: ")
+    add_reg(name, pwd)
 
 def add_reg(name: str, pwd: str):
     if registers[name] != "":
