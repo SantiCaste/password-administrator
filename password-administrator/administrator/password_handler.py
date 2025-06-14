@@ -28,3 +28,11 @@ def measure_strength(password: str) -> int:
     
     # If all criteria are met
     return constants.PWD_STRONG
+
+def print_password_criteria():
+    print("\n=== Password Criteria ===")
+    print(f"1. Minimum length: {constants.MIN_LENGTH} characters")
+    print(f"2. At least {constants.MIN_UPPERCASE} uppercase letter(s)")
+    print(f"3. At least {constants.MIN_LOWERCASE} lowercase letter(s)")
+    print(f"4. At least {constants.MIN_DIGITS} digit(s)")
+    print(f"5. At least {constants.MIN_SPECIAL} special character(s)\n")
