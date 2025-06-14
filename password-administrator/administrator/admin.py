@@ -1,5 +1,5 @@
 import random, string
-from constants import RANDOM_PWD_LENGTH
+import constants
 
 registers = {}
 
@@ -54,19 +54,28 @@ def show_reg():
     print()
 
 def generate_random_pwd():
-    return ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=RANDOM_PWD_LENGTH))
+    pwd = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=constants.RANDOM_PWD_LENGTH))
+    while measure_password_strength(pwd) != "Strong: Password meets all criteria.":
+        pwd = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=constants.RANDOM_PWD_LENGTH))
+    
+    return pwd
 
 # measure password strength considering length and complexity
 def measure_password_strength(password: str) -> str:
-    if len(password) < 8:
-        return "Weak: Password must be at least 8 characters long.", 
-    if not any(c.isdigit() for c in password):
-        return "Weak: Password must contain at least one digit.", 
-    if not any(c.isupper() for c in password):
-        return "Weak: Password must contain at least one uppercase letter.", 
-    if not any(c.islower() for c in password):
-        return "Weak: Password must contain at least one lowercase letter.", 
-    if not any(c in string.punctuation for c in password):
-        return "Weak: Password must contain at least one special character."
+    if len(password) < constants.MIN_LENGTH:
+        return constants.PWD_MUST_MIN_LENGTH
+    
+    if sum(c.isdigit() for c in password) < constants.MIN_DIGITS:
+        return constants.PWD_MUST_DIGITS
 
-    return "Strong: Password meets all criteria."
+    if sum(c.isupper() for c in password) < constants.MIN_UPPERCASE:
+        return constants.PWD_MUST_UPPERCASE
+
+    if sum(c.islower() for c in password) < constants.MIN_LOWERCASE:
+        return constants.PWD_MUST_LOWERCASE
+
+    if sum(c in string.punctuation for c in password) < constants.MIN_SPECIAL:
+        return constants.PWD_MUST_SPECIAL
+    
+    # If all criteria are met
+    return constants.PWD_STRONG
