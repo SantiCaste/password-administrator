@@ -34,7 +34,7 @@ def change_pwd(name: str):
         print(f"Incorrect password for user {name}.\n")
         return
 
-    print("Please insert the new password.")
+    print("Please insert the new password below.")
     new_pwd = request_password()
     registers[name] = new_pwd
 
