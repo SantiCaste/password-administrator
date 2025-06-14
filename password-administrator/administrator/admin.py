@@ -61,6 +61,22 @@ def change_user_name(cur_name: str):
     registers[new_name] = registers.pop(cur_name)
     print(f"User name changed successfully from '{cur_name}' to '{new_name}'.\n")
 
+def delete_user(name: str):
+    global registers
+    print(f"\n=== Delete User '{name}' ===")
+    if name not in registers:
+        print("User not found.\n")
+        return
+    
+    # request the password to confirm identity
+    pwd = input("Insert the password: ")
+    if registers[name] != pwd:
+        print(f"Incorrect password for user {name}.\n")
+        return
+    
+    del registers[name]
+    print(f"User '{name}' deleted successfully.\n")
+
 def request_password() -> str:
     handler.print_password_criteria()
     while True:
