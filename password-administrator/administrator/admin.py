@@ -1,31 +1,28 @@
 import random, string
 from constants import RANDOM_PWD_LENGTH
 
-registers: dict
+registers = {}
 
 def handle_registration():
+    global registers
     name = input("Insert the name: ")
     if name in registers:
         print("name already taken")
         return
     
-    opt = input("do you wnat to generate a random password? (y/n): ")
+    opt = input("do you want to generate a random password? (y/n): ")
     if opt.lower() == 'y':
         pwd = generate_random_pwd()
         print(f"Generated password: {pwd}")
-        add_reg(name, pwd)
+        registers[name] = pwd
     else:
         pwd = input("Insert the password: ")
-        add_reg(name, pwd)
+        registers[name] = pwd
 
-def add_reg(name: str, pwd: str):
-    if registers[name] != "":
-        print("name already taken")
-        return
-
-    registers[name] = pwd
+    print("User registered successfully")
 
 def change_pwd(name: str):
+    global registers
     if name not in registers:
         print("User not found")
         return
@@ -44,6 +41,7 @@ def change_pwd(name: str):
     print("password changed successfully")
 
 def show_reg():
+    global registers
     print("Registered users:")
     for name, pwd in registers.items():
         if pwd != "":
