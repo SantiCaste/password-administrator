@@ -40,6 +40,27 @@ def change_password(name: str):
 
     print("Password changed successfully.\n")
 
+def change_user_name(cur_name: str):
+    global registers
+    print(f"\n=== Change User Name from '{cur_name}' ===")
+    if cur_name not in registers:
+        print("User not found.\n")
+        return
+    
+    # request the old password to confirm identity
+    pwd = input("Insert the password: ")
+    if registers[cur_name] != pwd:
+        print(f"Incorrect password for user {cur_name}.\n")
+        return
+    
+    new_name = input("Insert the new name: ")
+    if new_name in registers:
+        print("New name already taken.\n")
+        return
+    
+    registers[new_name] = registers.pop(cur_name)
+    print(f"User name changed successfully from '{cur_name}' to '{new_name}'.\n")
+
 def request_password() -> str:
     handler.print_password_criteria()
     while True:
