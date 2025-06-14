@@ -1,4 +1,4 @@
-from admin import change_pwd, show_reg, handle_registration
+from admin import change_password, show_registers, handle_registration
 
 
 def print_banner():
@@ -20,9 +20,9 @@ if __name__ == "__main__":
             handle_registration()
         elif choice == "2":
             name = input("Insert the name: ")
-            change_pwd(name)
+            change_password(name)
         elif choice == "3":
-            show_reg()
+            show_registers()
         elif choice == "4":
             print("Exiting Password Administrator. Goodbye!\n")
             break

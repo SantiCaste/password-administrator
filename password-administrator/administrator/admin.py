@@ -21,7 +21,7 @@ def handle_registration():
     registers[name] = pwd
     print("User registered successfully.\n")
 
-def change_pwd(name: str):
+def change_password(name: str):
     global registers
     print(f"\n=== Change Password for '{name}' ===")
     if name not in registers:
@@ -53,7 +53,7 @@ def request_password() -> str:
 
     return pwd
 
-def show_reg():
+def show_registers():
     global registers
     print("\n=== Registered Users ===")
     if not registers:
