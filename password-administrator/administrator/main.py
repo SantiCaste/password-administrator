@@ -20,7 +20,11 @@ if __name__ == "__main__":
 
     while True:
         print_banner()
-        choice = int(input("Choose an option (1-5): "))
+        try:
+            choice = int(input("Choose an option (1-6): "))
+        except ValueError:
+            print("\nInvalid input. Please enter a number between 1 and 6.")
+            continue
         print()
         if choice == 1:
             handle_registration()
@@ -39,4 +43,4 @@ if __name__ == "__main__":
             print("Exiting Password Administrator. Goodbye!\n")
             break
         else:
-            print("Invalid option, please choose a number between 1 and 5.")
+            print("Invalid option, please choose a number between 1 and 6.")
