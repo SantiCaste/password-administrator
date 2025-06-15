@@ -9,7 +9,7 @@ Cross-Platform Compatibility: The URL-safe variant (which uses - and _ instead o
 - The salt is used to prevent rainbow table attacks and ensure that the same password doesn't always produce the same key
 - A rainbow table is a precomputed table used in password cracking that contains a large number of possible password hashes and their corresponding plaintext passwords
 
-### How Rainbow Tables Work:
+### How  <span style="color:red">R</span><span style="color:orange">a</span><span style="color:yellow">i</span><span style="color:green">n</span><span style="color:blue">b</span><span style="color:indigo">o</span><span style="color:violet">w</span> Tables Work:
 1. Attackers precompute hashes for millions/billions of common passwords
 2. They store these in a table (the "rainbow table")
 3. When they get a database of hashed passwords, they can quickly look up the hashes in their table to find the original passwords
