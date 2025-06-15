@@ -1,5 +1,4 @@
-from admin import handle_registration, change_password, change_user_name, delete_user, show_registers
-
+from admin import initialize_registers, handle_registration, change_password, change_user_name, delete_user, show_registers
 
 def print_banner():
     print("\n" + "="*35)
@@ -14,6 +13,11 @@ def print_banner():
     print("="*35)
 
 if __name__ == "__main__":
+    print("Welcome to the Password Administrator!\n")
+    print("Please enter your master password to access the registers.\n")
+    print("Initializing registers...\n")
+    initialize_registers()
+
     while True:
         print_banner()
         choice = int(input("Choose an option (1-5): "))
