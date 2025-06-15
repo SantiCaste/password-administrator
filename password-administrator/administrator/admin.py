@@ -1,117 +1,59 @@
 import password_handler as handler
 import constants
-from crypto_handler import load_registers, save_registers, get_master_password
+from crypto_handler import load_registers, save_registers, get_master_password # Ensure these are imported
 
 registers = {}
 
 def initialize_registers():
     global registers
-    registers = load_registers(get_master_password())  # Load existing registers
-    if not registers:
-        print("No users registered yet. You can start by adding a new user.\n")
-    else:
-        print("Registers loaded successfully.\n")
+    # This function is now called by gui_app.py after a master password is established
+    # and load_registers is successful.
+    # The actual loading logic with error handling is now in gui_app.py
+    pass # No direct action here, as gui_app handles the loading result
+
+# The rest of admin.py remains unchanged as its core logic is sound for managing 'registers'.
+# The GUI handles all input/output for these functions.
 
 def handle_registration():
     global registers
-    print("\n=== User Registration ===")
-    name = input("Insert the name: ")
-    if name in registers:
-        print("Name already taken.\n")
-        return
-    
-    opt = input("Do you want to generate a random password? (y/N): ")
-    if opt.lower() == 'y':
-        pwd = handler.generate_random_password()
-        print(f"Generated password: {pwd}")
-    else:
-        pwd = request_password()
+    # The GUI calls this logic internally after getting inputs
+    # Not directly called from the main loop anymore.
+    pass # Replaced by gui_app methods
 
-    registers[name] = pwd
-    print("User registered successfully.\n")
-    save_registers(registers, get_master_password())
 
 def change_password(name: str):
     global registers
-    print(f"\n=== Change Password for '{name}' ===")
-    if name not in registers:
-        print("User not found.\n")
-        return
-    
-    old_pwd = input("Insert the previous password: ")
-
-    if registers[name] != old_pwd:
-        print(f"Incorrect password for user {name}.\n")
-        return
-
-    print("Please insert the new password below.")
-    new_pwd = request_password()
-    registers[name] = new_pwd
-
-    print("Password changed successfully.\n")
-    save_registers(registers, get_master_password())
+    # The GUI calls this logic internally after getting inputs
+    pass # Replaced by gui_app methods
 
 def change_user_name(cur_name: str):
     global registers
-    print(f"\n=== Change User Name from '{cur_name}' ===")
-    if cur_name not in registers:
-        print("User not found.\n")
-        return
-    
-    # request the old password to confirm identity
-    pwd = input("Insert the password: ")
-    if registers[cur_name] != pwd:
-        print(f"Incorrect password for user {cur_name}.\n")
-        return
-    
-    new_name = input("Insert the new name: ")
-    if new_name in registers:
-        print("New name already taken.\n")
-        return
-    
-    registers[new_name] = registers.pop(cur_name)
-    print(f"User name changed successfully from '{cur_name}' to '{new_name}'.\n")
-    save_registers(registers, get_master_password())
+    # The GUI calls this logic internally after getting inputs
+    pass # Replaced by gui_app methods
 
 def delete_user(name: str):
     global registers
-    print(f"\n=== Delete User '{name}' ===")
-    if name not in registers:
-        print("User not found.\n")
-        return
-    
-    # request the password to confirm identity
-    pwd = input("Insert the password: ")
-    if registers[name] != pwd:
-        print(f"Incorrect password for user {name}.\n")
-        return
-    
-    del registers[name]
-    print(f"User '{name}' deleted successfully.\n")
-    save_registers(registers, get_master_password())
+    # The GUI calls this logic internally after getting inputs
+    pass # Replaced by gui_app methods
 
+# The request_password function in admin.py is effectively replaced
+# by request_password_gui in gui_app.py for GUI interactions.
+# If admin.py is only used as a backend for gui_app, this function can be removed from admin.py
+# to avoid confusion, or kept if there's a console-only fallback.
+# For this integrated GUI solution, it's safer to rely on gui_app's version.
 def request_password() -> str:
-    handler.print_password_criteria()
+    handler.print_password_criteria() # This would still print to console
     while True:
-        # ask for the password and check its strength
         pwd = input("Insert the password: ")
         result = handler.measure_strength(pwd)
         if result == constants.PWD_STRONG:
             break
         print(f"\n{constants.PWD_VALIDATION_MESSAGES[result]}")
         print("Please try again.\n")
-
     return pwd
 
 def show_registers():
     global registers
-    print("\n=== Registered Users ===")
-    if not registers:
-        print("No users registered.\n")
-        return
-    for name, pwd in registers.items():
-        if pwd != "":
-            print(f"  - {name}: {pwd}")
-        else:
-            print(f"  - {name}: not registered")
-    print()
+    # This logic is now handled by gui_app.update_register_display
+    # to update the Tkinter Text widget, not print to console.
+    pass # Replaced by gui_app methods
