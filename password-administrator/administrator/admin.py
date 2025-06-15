@@ -1,8 +1,16 @@
 import password_handler as handler
 import constants
-from crypto_handler import save_registers, get_master_password
+from crypto_handler import load_registers, save_registers, get_master_password
 
 registers = {}
+
+def initialize_registers():
+    global registers
+    registers = load_registers(get_master_password())  # Load existing registers
+    if not registers:
+        print("No users registered yet. You can start by adding a new user.\n")
+    else:
+        print("Registers loaded successfully.\n")
 
 def handle_registration():
     global registers
