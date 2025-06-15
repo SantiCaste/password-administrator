@@ -1,11 +1,9 @@
-import password_handler as handler
-import constants
 import json
-from cryptography.hazmat.primitives import kdf
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.exceptions import InvalidTag
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 import os
 
@@ -34,9 +32,8 @@ def derive_key(master_password: str, salt: bytes) -> bytes:
 #TODO: revisar esta función, no se si es correcta
 def load_registers(master_password: str) -> dict:
     if not os.path.exists(DATA_FILE):
-        registers = {}
         print("No encrypted data file found. Starting with an empty register.")
-        return
+        return {}
 
     try:
         with open(DATA_FILE, 'rb') as f:
@@ -46,20 +43,28 @@ def load_registers(master_password: str) -> dict:
         encrypted_data = urlsafe_b64decode(encrypted_data_b64)
         salt = encrypted_data[:16] # Assuming 16 bytes for salt
         nonce = encrypted_data[16:32] # Assuming 16 bytes for nonce
-        ciphertext_with_tag = encrypted_data[32:]
+        tag = encrypted_data[-16:] # Last 16 bytes are the GCM tag
+        ciphertext = encrypted_data[32:-16]
 
         key = derive_key(master_password, salt)
-        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
+        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend())
         decryptor = cipher.decryptor()
-        decrypted_data = decryptor.update(ciphertext_with_tag) + decryptor.finalize()
+        decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
         registers = json.loads(decrypted_data.decode('utf-8'))
         print("Registers loaded and decrypted successfully.")
     except Exception as e:
-        #TODO: manejar la excepción de otra manera, podemos pedir al usuario que vuelva a introducir la contraseña maestra
-        print(f"Error loading or decrypting data: {e}")
-        registers = {} # Clear registers if decryption fails
+        # handle InvalidTag exception:
+        if isinstance(e, InvalidTag):
+            print("Decryption failed: Invalid tag. The data may be corrupted or the master password is incorrect.")
+        else:
+            # Handle exceptions such as file not found, decryption errors, etc.
+            #TODO: manejar la excepción de otra manera, podemos pedir al usuario que vuelva a introducir la contraseña maestra
+            print(f"Error loading or decrypting data: {e}")
+        # TODO: definir qué vamos a hacer si falla la desencriptación
+        #registers = {} # Clear registers if decryption fails
         # Optionally, you might want to ask the user to re-enter master password
         # or handle this error more gracefully, e.g., by exiting.
+        exit(1)
     return registers
 
 def save_registers(registers: dict, master_password: str):
