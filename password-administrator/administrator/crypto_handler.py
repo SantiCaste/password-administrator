@@ -31,3 +31,53 @@ def derive_key(master_password: str, salt: bytes) -> bytes:
     )
     return kdf.derive(master_password.encode('utf-8'))
 
+#TODO: revisar esta función, no se si es correcta
+def load_registers(master_password: str) -> dict:
+    if not os.path.exists(DATA_FILE):
+        registers = {}
+        print("No encrypted data file found. Starting with an empty register.")
+        return
+
+    try:
+        with open(DATA_FILE, 'rb') as f:
+            encrypted_data_b64 = f.read()
+
+        # Extract salt, nonce, and ciphertext
+        encrypted_data = urlsafe_b64decode(encrypted_data_b64)
+        salt = encrypted_data[:16] # Assuming 16 bytes for salt
+        nonce = encrypted_data[16:32] # Assuming 16 bytes for nonce
+        ciphertext_with_tag = encrypted_data[32:]
+
+        key = derive_key(master_password, salt)
+        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(ciphertext_with_tag) + decryptor.finalize()
+        registers = json.loads(decrypted_data.decode('utf-8'))
+        print("Registers loaded and decrypted successfully.")
+    except Exception as e:
+        #TODO: manejar la excepción de otra manera, podemos pedir al usuario que vuelva a introducir la contraseña maestra
+        print(f"Error loading or decrypting data: {e}")
+        registers = {} # Clear registers if decryption fails
+        # Optionally, you might want to ask the user to re-enter master password
+        # or handle this error more gracefully, e.g., by exiting.
+    return registers
+
+def save_registers(registers: dict, master_password: str):
+    try:
+        salt = os.urandom(16)
+        key = derive_key(master_password, salt)
+        nonce = os.urandom(16) # Nonce for GCM
+
+        cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
+        encryptor = cipher.encryptor()
+        json_data = json.dumps(registers).encode('utf-8')
+        ciphertext = encryptor.update(json_data) + encryptor.finalize()
+
+        # Combine salt, nonce, and ciphertext for storage
+        encrypted_data = salt + nonce + ciphertext + encryptor.tag
+        with open(DATA_FILE, 'wb') as f:
+            f.write(urlsafe_b64encode(encrypted_data))
+        print("Registers encrypted and saved successfully.")
+    except Exception as e:
+        #TODO: manejar la excepción de otra manera quizá
+        print(f"Error saving or encrypting data: {e}")
