@@ -1,5 +1,6 @@
 import password_handler as handler
 import constants
+from crypto_handler import save_registers, get_master_password
 
 registers = {}
 
@@ -20,6 +21,7 @@ def handle_registration():
 
     registers[name] = pwd
     print("User registered successfully.\n")
+    save_registers(registers, get_master_password())
 
 def change_password(name: str):
     global registers
@@ -39,6 +41,7 @@ def change_password(name: str):
     registers[name] = new_pwd
 
     print("Password changed successfully.\n")
+    save_registers(registers, get_master_password())
 
 def change_user_name(cur_name: str):
     global registers
@@ -60,6 +63,7 @@ def change_user_name(cur_name: str):
     
     registers[new_name] = registers.pop(cur_name)
     print(f"User name changed successfully from '{cur_name}' to '{new_name}'.\n")
+    save_registers(registers, get_master_password())
 
 def delete_user(name: str):
     global registers
@@ -76,6 +80,7 @@ def delete_user(name: str):
     
     del registers[name]
     print(f"User '{name}' deleted successfully.\n")
+    save_registers(registers, get_master_password())
 
 def request_password() -> str:
     handler.print_password_criteria()
