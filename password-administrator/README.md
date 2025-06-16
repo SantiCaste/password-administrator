@@ -38,7 +38,7 @@ Cross-Platform Compatibility: The URL-safe variant (which uses - and _ instead o
     - It's much more efficient to try to crack passwords one at a time using the known salt
 
 ## Nonce
-- Contador para el metodo de cifrado en bloques CTR. Eg numero arbritario grande y le vas sumando 1 por bloque.
+- Contador para el metodo de cifrado en bloques CTR. Eg numero arbritario grande y le vas sumando 1 por bloque que queres encriptar.
 - Tambien se usa en Galois Counter Mode (GCM)
 - [Diapositivas 21-22 de Clase Cifrado Simétrico (Alesio)](https://miel.unlam.edu.ar/data7/data2/contenido/3662/Clase-Cifrado-Simetrico.pdf)
 
