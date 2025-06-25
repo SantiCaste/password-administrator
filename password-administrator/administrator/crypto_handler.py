@@ -8,6 +8,9 @@ from base64 import urlsafe_b64encode, urlsafe_b64decode
 import os
 
 DATA_FILE = 'data.json.enc'
+SALT_LENGTH = 16 # 128 bits, 1 block of AES
+NONCE_LENGTH = 16
+TAG_LENGTH = 16
 
 # Global variable to store the master password for the session
 master_pwd_session = None
@@ -26,9 +29,9 @@ def get_master_password() -> str:
 def derive_key(master_password: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
-        length=32, # AES-256 key
+        length=32, # 256 bits, 32 bytes lenght output
         salt=salt,
-        iterations=100000,
+        iterations=100000, # Makes the process intentionally slow to prevent brute-force attacks
         backend=default_backend()
     )
     return kdf.derive(master_password.encode('utf-8'))
@@ -43,10 +46,10 @@ def load_registers(master_password: str) -> tuple[dict | None, str]: # Returns (
             encrypted_data_b64 = f.read()
 
         encrypted_data = urlsafe_b64decode(encrypted_data_b64)
-        salt = encrypted_data[:16]
-        nonce = encrypted_data[16:32]
-        tag = encrypted_data[-16:]
-        ciphertext = encrypted_data[32:-16]
+        salt = encrypted_data[:SALT_LENGTH]
+        nonce = encrypted_data[SALT_LENGTH:SALT_LENGTH + NONCE_LENGTH]
+        tag = encrypted_data[-TAG_LENGTH:]
+        ciphertext = encrypted_data[SALT_LENGTH + NONCE_LENGTH:-TAG_LENGTH]
 
         key = derive_key(master_password, salt)
         cipher = Cipher(algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend())
@@ -61,9 +64,9 @@ def load_registers(master_password: str) -> tuple[dict | None, str]: # Returns (
 
 def save_registers(registers: dict, master_password: str):
     try:
-        salt = os.urandom(16)
+        salt = os.urandom(SALT_LENGTH)
         key = derive_key(master_password, salt)
-        nonce = os.urandom(16)
+        nonce = os.urandom(NONCE_LENGTH) # Nonce for GCM
 
         cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
         encryptor = cipher.encryptor()
