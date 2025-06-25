@@ -49,7 +49,7 @@ def load_registers(master_password: str) -> tuple[dict | None, str]: # Returns (
         salt = encrypted_data[:SALT_LENGTH]
         nonce = encrypted_data[SALT_LENGTH:SALT_LENGTH + NONCE_LENGTH]
         tag = encrypted_data[-TAG_LENGTH:]
-        ciphertext = encrypted_data[SALT_LENGTH + NONCE_LENGTH:-TAG_LENGTH]
+        ciphertext = encrypted_data[32:-16]
 
         key = derive_key(master_password, salt)
         cipher = Cipher(algorithms.AES(key), modes.GCM(nonce, tag), backend=default_backend())
@@ -66,7 +66,7 @@ def save_registers(registers: dict, master_password: str):
     try:
         salt = os.urandom(SALT_LENGTH)
         key = derive_key(master_password, salt)
-        nonce = os.urandom(NONCE_LENGTH) # Nonce for GCM
+        nonce = os.urandom(16)
 
         cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
         encryptor = cipher.encryptor()
