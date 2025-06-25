@@ -37,12 +37,12 @@ def derive_key(master_password: str, salt: bytes) -> bytes:
     return kdf.derive(master_password.encode('utf-8'))
 
 # Modified to return status
-def load_registers(master_password: str) -> tuple[dict | None, str]: # Returns (registers, status_message)
-    if not os.path.exists(DATA_FILE):
+def load_registers(master_password: str, path: str) -> tuple[dict | None, str]: # Returns (registers, status_message)
+    if not os.path.exists(path):
         return None, "FILE_NOT_FOUND"
 
     try:
-        with open(DATA_FILE, 'rb') as f:
+        with open(path, 'rb') as f:
             encrypted_data_b64 = f.read()
 
         encrypted_data = urlsafe_b64decode(encrypted_data_b64)
@@ -62,7 +62,7 @@ def load_registers(master_password: str) -> tuple[dict | None, str]: # Returns (
     except Exception as e:
         return None, f"DECRYPTION_ERROR: {e}"
 
-def save_registers(registers: dict, master_password: str):
+def save_registers(registers: dict, master_password: str, path: str):
     try:
         salt = os.urandom(SALT_LENGTH)
         key = derive_key(master_password, salt)
@@ -74,13 +74,16 @@ def save_registers(registers: dict, master_password: str):
         ciphertext = encryptor.update(json_data) + encryptor.finalize()
 
         encrypted_data = salt + nonce + ciphertext + encryptor.tag
-        with open(DATA_FILE, 'wb') as f:
+        with open(path, 'wb') as f:
             f.write(urlsafe_b64encode(encrypted_data))
         print("Registers encrypted and saved successfully.") # Still prints to console
+    except FileExistsError:
+        raise FileExistsError(f"File '{path}' already exists")
+        print(f"File '{path}' already exists")
     except Exception as e:
         print(f"Error saving or encrypting data: {e}") # Still prints to console
 
-def create_empty_registers(master_password: str):
+def create_empty_registers(master_password: str, path: str):
     """Creates a new, empty encrypted data file."""
     # This will overwrite an existing file if it has the same name
-    save_registers({}, master_password)
+    save_registers({}, master_password, path)

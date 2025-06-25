@@ -59,7 +59,7 @@ class PasswordAdminApp:
         if file_path:
             self.current_file = file_path
             crypto_handler.DATA_FILE = file_path
-            messagebox.showinfo("Archivo seleccionado", f"Archivo seleccionado:\n{file_path}")
+            messagebox.showinfo("Archivo seleccionado", f"Archivo seleccionado:\n{os.path.basename(file_path)}")
 
     def open_existing_file(self):
         file_path = filedialog.askopenfilename(
@@ -83,7 +83,7 @@ class PasswordAdminApp:
             pwd_dialog.grab_set()
             self.center_window(pwd_dialog, 320, 120)
 
-            tk.Label(pwd_dialog, text="Ingrese su contraseña maestra para el archivo seleccionado:").pack(pady=(15, 5))
+            tk.Label(pwd_dialog, text=f"Ingrese su contraseña maestra para {os.path.basename(self.current_file)}:").pack(pady=(15, 5))
             pwd_var = tk.StringVar()
             pwd_entry = tk.Entry(pwd_dialog, textvariable=pwd_var, show='*', width=25)
             pwd_entry.pack(pady=2)
@@ -114,7 +114,7 @@ class PasswordAdminApp:
                 return
 
             crypto_handler.master_pwd_session = master_pwd
-            registers, status = crypto_handler.load_registers(master_pwd)
+            registers, status = crypto_handler.load_registers(master_pwd, self.current_file)
 
             if status == "SUCCESS":
                 admin.registers = registers
@@ -139,6 +139,22 @@ class PasswordAdminApp:
         self.setup_window.destroy()
 
         while True:
+            filename = simpledialog.askstring("Nombre del archivo", "Ingrese el nombre para el nuevo archivo de contraseñas (sin extensión):")
+            if filename is None:
+                self.root.destroy()
+                return
+
+            if not filename.strip():
+                messagebox.showerror("Error", "El nombre del archivo no puede estar vacío.")
+                continue
+
+            if not filename.endswith('.json.enc'):
+                filename = filename.strip() + '.json.enc'
+            
+            if os.path.exists(filename):
+                messagebox.showerror("Error", f"El archivo '{filename}' ya existe. Por favor, elija otro nombre.")
+                continue
+            
             new_master_pwd = self.request_password_gui("Defina su nueva contraseña maestra:")
             if new_master_pwd is None:
                 self.root.destroy()
@@ -149,10 +165,12 @@ class PasswordAdminApp:
                 self.root.destroy()
                 return
 
+        
+            self.current_file = filename
             if new_master_pwd == confirm_pwd:
                 crypto_handler.master_pwd_session = new_master_pwd
                 try:
-                    crypto_handler.create_empty_registers(new_master_pwd)
+                    crypto_handler.create_empty_registers(new_master_pwd, self.current_file)
                     admin.registers = {}
                     messagebox.showinfo("Éxito", f"Nuevo archivo de contraseñas '{crypto_handler.DATA_FILE}' creado correctamente.")
                     self.initialize_main_app()
@@ -383,7 +401,7 @@ class PasswordAdminApp:
                 del admin.registers[old_name]
             else:
                 admin.registers[old_name] = new_pwd
-            admin.save_registers(admin.registers, crypto_handler.get_master_password())
+            admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
             self.update_message("Usuario y/o contraseña modificados correctamente.")
             self.update_register_display()
             edit_win.destroy()
@@ -403,7 +421,7 @@ class PasswordAdminApp:
         if not confirm:
             return
         del admin.registers[self.selected_user]
-        admin.save_registers(admin.registers, crypto_handler.get_master_password())
+        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message(f"Usuario '{self.selected_user}' eliminado correctamente.")
         self.update_register_display()
 
@@ -418,7 +436,7 @@ class PasswordAdminApp:
         if new_pwd is None:
             return
         admin.registers[self.selected_user] = new_pwd
-        admin.save_registers(admin.registers, crypto_handler.get_master_password())
+        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message("Contraseña cambiada correctamente.")
         self.update_register_display()
 
@@ -436,7 +454,7 @@ class PasswordAdminApp:
             self.update_message("El nuevo nombre ya está en uso.", is_error=True)
             return
         admin.registers[new_name] = admin.registers.pop(self.selected_user)
-        admin.save_registers(admin.registers, crypto_handler.get_master_password())
+        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message(f"Nombre de usuario cambiado correctamente a '{new_name}'.")
         self.update_register_display()
 
@@ -448,11 +466,12 @@ class PasswordAdminApp:
         if file_path:
             self.current_file = file_path
             crypto_handler.DATA_FILE = file_path
-            master_pwd = simpledialog.askstring("Contraseña maestra", f"Ingrese la contraseña maestra para:\n{file_path}", show='*')
+            
+            master_pwd = simpledialog.askstring("Contraseña maestra", f"Ingrese la contraseña maestra para:\n{os.path.basename(file_path)}", show='*')
             if master_pwd is None:
                 return
             crypto_handler.master_pwd_session = master_pwd
-            registers, status = crypto_handler.load_registers(master_pwd)
+            registers, status = crypto_handler.load_registers(master_pwd, self.current_file)
             if status == "SUCCESS":
                 admin.registers = registers
                 self.password_visibility = {}
@@ -589,7 +608,7 @@ class PasswordAdminApp:
                 return
 
         admin.registers[name] = pwd
-        admin.save_registers(admin.registers, crypto_handler.get_master_password())
+        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
 
