@@ -488,10 +488,10 @@ class PasswordAdminApp:
     def request_password_gui(self, prompt_message="Ingrese la contraseña:"):
         dialog = tk.Toplevel(self.root)
         dialog.title("Ingresar contraseña")
-        dialog.geometry("400x240")
+        dialog.geometry("400x280")
         dialog.transient(self.root)
         dialog.grab_set()
-        self.center_window(dialog, 400, 240)
+        self.center_window(dialog, 400, 280)
 
         tk.Label(dialog, text=prompt_message).pack(pady=(10, 2))
         pwd_var = tk.StringVar()
@@ -499,6 +499,11 @@ class PasswordAdminApp:
         pwd_entry.pack(pady=2)
         pwd_entry.focus_set()
         dialog.bind('<Return>', lambda event: on_ok())
+
+        # Checkbox para omitir verificación de seguridad
+        skip_check_var = tk.BooleanVar()
+        skip_checkbox = tk.Checkbutton(dialog, text="No me jodas", variable=skip_check_var)
+        skip_checkbox.pack(pady=5)
 
         # Indicador de seguridad
         strength_label = tk.Label(dialog, text="", font=("Arial", 10, "bold"))
@@ -514,11 +519,23 @@ class PasswordAdminApp:
             f"2. {constants.MIN_UPPERCASE} mayúscula(s), {constants.MIN_LOWERCASE} minúscula(s)\n"
             f"3. {constants.MIN_DIGITS} dígito(s), {constants.MIN_SPECIAL} especial(es)"
         )
-        tk.Label(dialog, text=criteria, fg="gray").pack(pady=2)
+        criteria_label = tk.Label(dialog, text=criteria, fg="gray")
+        criteria_label.pack(pady=2)
 
         result = {"password": None}
 
         def update_strength(*args):
+            # Si la verificación está omitida, ocultar indicadores
+            if skip_check_var.get():
+                strength_label.config(text="Verificación omitida", fg="blue")
+                progress['value'] = 0
+                progress.configure(style="blue.Horizontal.TProgressbar")
+                criteria_label.config(fg="lightgray")
+                return
+            
+            # Mostrar criterios normalmente
+            criteria_label.config(fg="gray")
+            
             pwd = pwd_var.get()
             code = handler.measure_strength(pwd)
             # Calcula el nivel de seguridad (0 a 5)
@@ -564,11 +581,24 @@ class PasswordAdminApp:
         style.configure("green.Horizontal.TProgressbar", foreground='green', background='green')
         style.configure("red.Horizontal.TProgressbar", foreground='red', background='red')
         style.configure("orange.Horizontal.TProgressbar", foreground='orange', background='orange')
+        style.configure("blue.Horizontal.TProgressbar", foreground='blue', background='blue')
 
         pwd_var.trace_add("write", update_strength)
+        skip_check_var.trace_add("write", update_strength)
 
         def on_ok():
             pwd = pwd_var.get()
+            
+            # Si la verificación está omitida, aceptar cualquier contraseña
+            if skip_check_var.get():
+                if not pwd:  # Solo verificar que no esté vacía
+                    messagebox.showerror("Error", "La contraseña no puede estar vacía.", parent=dialog)
+                    return
+                result["password"] = pwd
+                dialog.destroy()
+                return
+            
+            # Verificación normal de seguridad
             code = handler.measure_strength(pwd)
             if code == constants.PWD_STRONG:
                 result["password"] = pwd
