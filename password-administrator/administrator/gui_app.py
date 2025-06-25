@@ -638,6 +638,7 @@ class PasswordAdminApp:
                 return
 
         admin.registers[name] = pwd
+        # use password_sesion instead?
         admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
