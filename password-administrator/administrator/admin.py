@@ -115,3 +115,9 @@ def show_registers():
         else:
             print(f"  - {name}: not registered")
     print()
+
+def check_strength(name):
+    problems = handler.check_strength(registers[name])
+    print("Procesando...\n")
+    print(handler.format_problems(problems))
+    

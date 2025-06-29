@@ -1,5 +1,7 @@
 import random, string
 import constants
+import validators 
+from threading import Event
 
 
 def generate_random_password():
@@ -36,3 +38,27 @@ def print_password_criteria():
     print(f"3. At least {constants.MIN_LOWERCASE} lowercase letter(s)")
     print(f"4. At least {constants.MIN_DIGITS} digit(s)")
     print(f"5. At least {constants.MIN_SPECIAL} special character(s)\n")
+
+# Returns an array with the passwords problems
+def check_strength(password: str) -> str:
+    problems = list()
+    event = Event()
+    # Seteamos validaciones a ejecutar
+    validator_list = [validators.check_brute_force, validators.validate_patterns, validators.calculate_entropy, validators.is_leaked_pass]
+
+    for val in validator_list:
+        val(password, problems, event)
+
+    return problems
+
+def format_problems(problems: str) -> str: 
+    output = ""
+    if len(problems) == 0:
+        output += "Contraseña segura"
+    else:
+        output = "Problemas:"
+        for p in problems:
+            output += "\n\t" + p
+        output+="\n"
+
+    return output

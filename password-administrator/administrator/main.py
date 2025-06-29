@@ -1,4 +1,4 @@
-from admin import initialize_registers, handle_registration, change_password, change_user_name, delete_user, show_registers
+from admin import initialize_registers, handle_registration, change_password, change_user_name, delete_user, show_registers, check_strength
 
 def print_banner():
     print("\n" + "="*35)
@@ -9,10 +9,11 @@ def print_banner():
     print("3. Change user name")
     print("4. Delete user")
     print("5. Show registered users")
-    print("6. Exit")
+    print("6. Messure stregth")
+    print("7. Exit")
     print("="*35)
 
-if __name__ == "__main__":
+def main():
     print("Welcome to the Password Administrator!\n")
     print("Please enter your master password to access the registers.\n")
     print("Initializing registers...\n")
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     while True:
         print_banner()
         try:
-            choice = int(input("Choose an option (1-6): "))
+            choice = int(input("Choose an option (1-7): "))
         except ValueError:
             print("\nInvalid input. Please enter a number between 1 and 6.")
             continue
@@ -40,7 +41,13 @@ if __name__ == "__main__":
         elif choice == 5:
             show_registers()
         elif choice == 6:
+            name = input("Insert name: ")
+            check_strength(name)
+        elif choice == 7:
             print("Exiting Password Administrator. Goodbye!\n")
             break
         else:
             print("Invalid option, please choose a number between 1 and 6.")
+
+if __name__ == "__main__":
+    main()
