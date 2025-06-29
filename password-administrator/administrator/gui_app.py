@@ -14,6 +14,16 @@ def save_registers(registers_dict, master_password, file_path):
 def load_registers(master_password, file_path):
     return crypto_handler.load_registers(master_password, file_path)
 
+# code_map is a dictionary that maps password strength codes to their display properties
+code_map = {
+    constants.PWD_STRONG:      ("Segura", "green", "green.Horizontal.TProgressbar"),
+    constants.PWD_MUST_MIN_LENGTH: ("Demasiado corta", "red", "red.Horizontal.TProgressbar"),
+    constants.PWD_MUST_UPPERCASE:  ("Falta mayúscula", "orange", "orange.Horizontal.TProgressbar"),
+    constants.PWD_MUST_LOWERCASE:  ("Falta minúscula", "orange", "orange.Horizontal.TProgressbar"),
+    constants.PWD_MUST_DIGITS:     ("Falta dígito", "orange", "orange.Horizontal.TProgressbar"),
+    constants.PWD_MUST_SPECIAL:    ("Falta especial", "orange", "orange.Horizontal.TProgressbar"),
+}
+
 class PasswordAdminApp:
     def __init__(self, root):
         self.root = root
@@ -351,41 +361,13 @@ class PasswordAdminApp:
 
         def update_strength(*args):
             pwd = pwd_var.get()
-            code = handler.measure_strength(pwd)
-            score = 0
-            if len(pwd) >= constants.MIN_LENGTH:
-                score += 1
-            if sum(c.isupper() for c in pwd) >= constants.MIN_UPPERCASE:
-                score += 1
-            if sum(c.islower() for c in pwd) >= constants.MIN_LOWERCASE:
-                score += 1
-            if sum(c.isdigit() for c in pwd) >= constants.MIN_DIGITS:
-                score += 1
-            if sum(c in handler.string.punctuation for c in pwd) >= constants.MIN_SPECIAL:
-                score += 1
+            code, score = handler.measure_strength(pwd)
             progress['value'] = score
 
-            if code == constants.PWD_STRONG:
-                strength_label.config(text="Segura", fg="green")
-                progress.configure(style="green.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_MIN_LENGTH:
-                strength_label.config(text="Demasiado corta", fg="red")
-                progress.configure(style="red.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_UPPERCASE:
-                strength_label.config(text="Falta mayúscula", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_LOWERCASE:
-                strength_label.config(text="Falta minúscula", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_DIGITS:
-                strength_label.config(text="Falta dígito", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_SPECIAL:
-                strength_label.config(text="Falta especial", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            else:
-                strength_label.config(text="", fg="black")
-                progress.configure(style="red.Horizontal.TProgressbar")
+            text, color, style = code_map.get(code, ("", "black", "red.Horizontal.TProgressbar"))
+            strength_label.config(text=text, fg=color)
+            progress.configure(style=style)
+
 
         pwd_var.trace_add("write", update_strength)
         update_strength()
@@ -393,7 +375,7 @@ class PasswordAdminApp:
         def on_save():
             new_name = name_var.get().strip()
             new_pwd = pwd_var.get()
-            code = handler.measure_strength(new_pwd)
+            code, _ = handler.measure_strength(new_pwd)
             if not new_name:
                 messagebox.showerror("Error", "El nombre de usuario no puede estar vacío.", parent=edit_win)
                 return
@@ -600,43 +582,14 @@ class PasswordAdminApp:
             criteria_label.config(fg="gray")
             
             pwd = pwd_var.get()
-            code = handler.measure_strength(pwd)
-            # Calcula el nivel de seguridad (0 a 5)
-            score = 0
-            if len(pwd) >= constants.MIN_LENGTH:
-                score += 1
-            if sum(c.isupper() for c in pwd) >= constants.MIN_UPPERCASE:
-                score += 1
-            if sum(c.islower() for c in pwd) >= constants.MIN_LOWERCASE:
-                score += 1
-            if sum(c.isdigit() for c in pwd) >= constants.MIN_DIGITS:
-                score += 1
-            if sum(c in handler.string.punctuation for c in pwd) >= constants.MIN_SPECIAL:
-                score += 1
+            code, score = handler.measure_strength(pwd)
             progress['value'] = score
 
+            text, color, style = code_map.get(code, ("", "black", "red.Horizontal.TProgressbar"))
+            strength_label.config(text=text, fg=color)
+
             # Cambia color y texto según el código
-            if code == constants.PWD_STRONG:
-                strength_label.config(text="Segura", fg="green")
-                progress.configure(style="green.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_MIN_LENGTH:
-                strength_label.config(text="Demasiado corta", fg="red")
-                progress.configure(style="red.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_UPPERCASE:
-                strength_label.config(text="Falta mayúscula", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_LOWERCASE:
-                strength_label.config(text="Falta minúscula", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_DIGITS:
-                strength_label.config(text="Falta dígito", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            elif code == constants.PWD_MUST_SPECIAL:
-                strength_label.config(text="Falta especial", fg="orange")
-                progress.configure(style="orange.Horizontal.TProgressbar")
-            else:
-                strength_label.config(text="", fg="black")
-                progress.configure(style="red.Horizontal.TProgressbar")
+            progress.configure(style=style)
 
         # Estilos de colores para la barra
         style = ttk.Style(dialog)
@@ -662,7 +615,7 @@ class PasswordAdminApp:
                 return
             
             # Verificación normal de seguridad
-            code = handler.measure_strength(pwd)
+            code, _ = handler.measure_strength(pwd)
             if code == constants.PWD_STRONG:
                 result["password"] = pwd
                 dialog.destroy()
@@ -708,6 +661,7 @@ class PasswordAdminApp:
                 return
 
         registers[name] = pwd
+        print(crypto_handler.master_pwd_session)
         save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
