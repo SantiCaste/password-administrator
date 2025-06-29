@@ -1,18 +1,28 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog, Toplevel, filedialog, ttk
-import admin
+from PIL import Image, ImageTk
 import password_handler as handler
 import constants
 import crypto_handler
 import os
+
+registers = {}
+
+def save_registers(registers_dict, master_password, file_path):
+    crypto_handler.save_registers(registers_dict, master_password, file_path)
+
+def load_registers(master_password, file_path):
+    return crypto_handler.load_registers(master_password, file_path)
 
 class PasswordAdminApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Administrador de Contraseñas")
         self.root.geometry("600x450")
-        self.center_window(self.root, 600, 450)  # Centrar ventana principal
-        self.password_visibility = {}  # Dict: user -> bool (True=visible)
+        self.center_window(self.root, 600, 450)
+        self.root.lift()
+        self.root.focus_force()
+        self.password_visibility = {} 
         self.current_file = crypto_handler.DATA_FILE
         self.selected_user = None
         self.master_password_setup()
@@ -33,8 +43,9 @@ class PasswordAdminApp:
         self.setup_window.transient(self.root)
         self.setup_window.grab_set()
         self.center_window(self.setup_window, 350, 200)
+        self.setup_window.lift()
+        self.setup_window.focus_force()
 
-        # Centrar contenido usando un frame
         content = tk.Frame(self.setup_window)
         content.pack(expand=True, fill="both")
 
@@ -46,7 +57,7 @@ class PasswordAdminApp:
 
     def on_setup_window_close(self):
         if crypto_handler.master_pwd_session is None:
-            messagebox.showinfo("Salir", "No se seleccionó ni creó ningún archivo. Saliendo de la aplicación.")
+            messagebox.showinfo("Salir", "No se seleccionó ni creó ningún archivo. Saliendo de la aplicación.", parent=self.root)
             self.root.destroy()
         else:
             self.setup_window.destroy()
@@ -59,15 +70,16 @@ class PasswordAdminApp:
         if file_path:
             self.current_file = file_path
             crypto_handler.DATA_FILE = file_path
-            messagebox.showinfo("Archivo seleccionado", f"Archivo seleccionado:\n{os.path.basename(file_path)}")
+            messagebox.showinfo("Archivo seleccionado", f"Archivo seleccionado:\n{os.path.basename(file_path)}", parent=self.root)
 
     def open_existing_file(self):
+        global registers
         file_path = filedialog.askopenfilename(
             title="Seleccionar archivo de datos encriptado",
             filetypes=[("JSON Encriptado", "*.enc"), ("Todos los archivos", "*.*")]
         )
         if not file_path:
-            return  # Usuario canceló
+            return
 
         self.current_file = file_path
         crypto_handler.DATA_FILE = file_path
@@ -75,13 +87,14 @@ class PasswordAdminApp:
         max_attempts = 3
         attempts = 0
         while attempts < max_attempts:
-            # --- USAR UN TOPLEVEL MODAL PARA EL PASSWORD ---
             pwd_dialog = tk.Toplevel(self.root)
             pwd_dialog.title("Contraseña maestra")
             pwd_dialog.geometry("320x120")
             pwd_dialog.transient(self.root)
             pwd_dialog.grab_set()
             self.center_window(pwd_dialog, 320, 120)
+            pwd_dialog.lift()
+            pwd_dialog.focus_force()
 
             tk.Label(pwd_dialog, text=f"Ingrese su contraseña maestra para {os.path.basename(self.current_file)}:").pack(pady=(15, 5))
             pwd_var = tk.StringVar()
@@ -107,52 +120,53 @@ class PasswordAdminApp:
 
             pwd_dialog.wait_window()
             master_pwd = result["value"]
-            # --- FIN DEL TOPLEVEL MODAL ---
 
             if master_pwd is None:
                 self.root.destroy()
                 return
 
             crypto_handler.master_pwd_session = master_pwd
-            registers, status = crypto_handler.load_registers(master_pwd, self.current_file)
+            loaded, status = load_registers(master_pwd, self.current_file)
 
             if status == "SUCCESS":
-                admin.registers = registers
+                registers.clear()
+                registers.update(loaded)
                 self.initialize_main_app()
                 return
             elif status == "FILE_NOT_FOUND":
-                messagebox.showerror("Error", f"El archivo de datos encriptado '{crypto_handler.DATA_FILE}' no fue encontrado. Por favor, crea uno nuevo.")
+                messagebox.showerror("Error", f"El archivo de datos encriptado '{crypto_handler.DATA_FILE}' no fue encontrado. Por favor, crea uno nuevo.", parent=self.root)
                 self.master_password_setup()
                 return
             elif status == "INVALID_PASSWORD":
                 attempts += 1
-                messagebox.showerror("Desencriptado fallido", f"Contraseña maestra incorrecta. Quedan {max_attempts - attempts} intento(s).")
+                messagebox.showerror("Desencriptado fallido", f"Contraseña maestra incorrecta. Quedan {max_attempts - attempts} intento(s).", parent=self.root)
             else:
-                messagebox.showerror("Desencriptado fallido", f"Ocurrió un error durante la desencriptación: {status}. Por favor, revisa el archivo o intenta nuevamente.")
+                messagebox.showerror("Desencriptado fallido", f"Ocurrió un error durante la desencriptación: {status}. Por favor, revisa el archivo o intenta nuevamente.", parent=self.root)
                 self.master_password_setup()
                 return
 
-        messagebox.showerror("Intentos excedidos", "Demasiados intentos incorrectos de contraseña maestra. Saliendo.")
+        messagebox.showerror("Intentos excedidos", "Demasiados intentos incorrectos de contraseña maestra. Saliendo.", parent=self.root)
         self.root.destroy()
 
     def create_new_file(self):
+        global registers
         self.setup_window.destroy()
 
         while True:
-            filename = simpledialog.askstring("Nombre del archivo", "Ingrese el nombre para el nuevo archivo de contraseñas (sin extensión):")
+            filename = simpledialog.askstring("Nombre del archivo", "Ingrese el nombre para el nuevo archivo de contraseñas (sin extensión):", parent=self.root)
             if filename is None:
                 self.root.destroy()
                 return
 
             if not filename.strip():
-                messagebox.showerror("Error", "El nombre del archivo no puede estar vacío.")
+                messagebox.showerror("Error", "El nombre del archivo no puede estar vacío.", parent=self.root)
                 continue
 
             if not filename.endswith('.json.enc'):
                 filename = filename.strip() + '.json.enc'
             
             if os.path.exists(filename):
-                messagebox.showerror("Error", f"El archivo '{filename}' ya existe. Por favor, elija otro nombre.")
+                messagebox.showerror("Error", f"El archivo '{filename}' ya existe. Por favor, elija otro nombre.", parent=self.root)
                 continue
             
             new_master_pwd = self.request_password_gui("Defina su nueva contraseña maestra:")
@@ -160,36 +174,38 @@ class PasswordAdminApp:
                 self.root.destroy()
                 return
 
-            confirm_pwd = simpledialog.askstring("Confirmar contraseña maestra", "Confirme su nueva contraseña maestra:", show='*')
+            confirm_pwd = simpledialog.askstring("Confirmar contraseña maestra", "Confirme su nueva contraseña maestra:", show='*', parent=self.root)
             if confirm_pwd is None:
                 self.root.destroy()
                 return
 
-        
             self.current_file = filename
             if new_master_pwd == confirm_pwd:
                 crypto_handler.master_pwd_session = new_master_pwd
                 try:
                     crypto_handler.create_empty_registers(new_master_pwd, self.current_file)
-                    admin.registers = {}
-                    messagebox.showinfo("Éxito", f"Nuevo archivo de contraseñas '{crypto_handler.DATA_FILE}' creado correctamente.")
+                    registers.clear()
+                    messagebox.showinfo(
+                        "Éxito",
+                        f"Nuevo archivo de contraseñas '{os.path.basename(self.current_file)}' creado correctamente.",
+                        parent=self.root
+                    )
                     self.initialize_main_app()
                     return
                 except Exception as e:
-                    messagebox.showerror("Error", f"No se pudo crear el nuevo archivo: {e}")
+                    messagebox.showerror("Error", f"No se pudo crear el nuevo archivo: {e}", parent=self.root)
                     self.root.destroy()
                     return
             else:
-                messagebox.showerror("No coinciden", "Las contraseñas no coinciden. Intente nuevamente.")
+                messagebox.showerror("No coinciden", "Las contraseñas no coinciden. Intente nuevamente.", parent=self.root)
 
     def initialize_main_app(self):
         self.root.deiconify()
         self.create_widgets()
         self.update_register_display()
-        messagebox.showinfo("Listo", "Registros cargados correctamente. Ahora puede gestionar sus contraseñas.")
+        messagebox.showinfo("Listo", "Registros cargados correctamente. Ahora puede gestionar sus contraseñas.", parent=self.root)
 
     def create_widgets(self):
-        # Frame para botones
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
@@ -204,11 +220,9 @@ class PasswordAdminApp:
         self.message_label = tk.Label(self.root, text="", fg="blue")
         self.message_label.pack(pady=5)
 
-        # Etiqueta para mostrar el archivo actual
         self.current_file_label = tk.Label(self.root, text=f"Archivo actual: {os.path.basename(self.current_file)}", fg="gray")
         self.current_file_label.pack(pady=2)
 
-        # Treeview para usuarios y contraseñas
         columns = ("Usuario", "Contraseña")
         self.tree = ttk.Treeview(self.root, columns=columns, show="headings", selectmode="browse")
         self.tree.heading("Usuario", text="Usuario")
@@ -219,12 +233,10 @@ class PasswordAdminApp:
         self.tree.bind("<<TreeviewSelect>>", self.on_user_select)
         self.tree.bind("<Button-3>", self.show_context_menu)
 
-        # Menú contextual
         self.context_menu = tk.Menu(self.root, tearoff=0)
         self.context_menu.add_command(label="Copiar usuario", command=self.copy_selected_user)
         self.context_menu.add_command(label="Copiar contraseña", command=self.copy_selected_password)
 
-        # Botón para mostrar/ocultar contraseña
         self.show_password_btn = tk.Button(self.root, text="Mostrar contraseña", command=self.toggle_password, state=tk.DISABLED)
         self.show_password_btn.pack(pady=2)
 
@@ -232,9 +244,8 @@ class PasswordAdminApp:
         self.message_label.config(text=message, fg="red" if is_error else "blue")
 
     def update_register_display(self):
-        for row in self.tree.get_children():
-            self.tree.delete(row)
-        for user, pwd in admin.registers.items():
+        self.tree.delete(*self.tree.get_children())
+        for user, pwd in registers.items():
             show = self.password_visibility.get(user, False)
             pwd_display = pwd if show else "********"
             self.tree.insert("", tk.END, iid=user, values=(user, pwd_display))
@@ -250,7 +261,6 @@ class PasswordAdminApp:
             self.modify_btn.config(state=tk.NORMAL)
             self.delete_btn.config(state=tk.NORMAL)
             self.show_password_btn.config(state=tk.NORMAL)
-            # Cambia el texto del botón según el estado
             show = self.password_visibility.get(self.selected_user, False)
             self.show_password_btn.config(text="Ocultar contraseña" if show else "Mostrar contraseña")
         else:
@@ -264,8 +274,7 @@ class PasswordAdminApp:
             return
         current = self.password_visibility.get(self.selected_user, False)
         self.password_visibility[self.selected_user] = not current
-        # Actualiza solo la fila seleccionada
-        pwd = admin.registers[self.selected_user]
+        pwd = registers[self.selected_user]
         pwd_display = pwd if not current else "********"
         self.tree.set(self.selected_user, "Contraseña", pwd_display)
         self.show_password_btn.config(text="Ocultar contraseña" if not current else "Mostrar contraseña")
@@ -288,7 +297,7 @@ class PasswordAdminApp:
 
     def copy_selected_password(self):
         if self.selected_user:
-            pwd = admin.registers.get(self.selected_user, "")
+            pwd = registers.get(self.selected_user, "")
             self.root.clipboard_clear()
             self.root.clipboard_append(pwd)
             self.update_message("Contraseña copiada al portapapeles.")
@@ -298,7 +307,7 @@ class PasswordAdminApp:
             return
 
         old_name = self.selected_user
-        old_pwd = admin.registers[old_name]
+        old_pwd = registers[old_name]
 
         # Ventana de edición
         edit_win = tk.Toplevel(self.root)
@@ -388,7 +397,7 @@ class PasswordAdminApp:
             if not new_name:
                 messagebox.showerror("Error", "El nombre de usuario no puede estar vacío.", parent=edit_win)
                 return
-            if new_name != old_name and new_name in admin.registers:
+            if new_name != old_name and new_name in registers:
                 messagebox.showerror("Error", "El nuevo nombre ya está en uso.", parent=edit_win)
                 return
             if code != constants.PWD_STRONG:
@@ -397,11 +406,11 @@ class PasswordAdminApp:
 
             # Actualiza el registro
             if new_name != old_name:
-                admin.registers[new_name] = new_pwd
-                del admin.registers[old_name]
+                registers[new_name] = new_pwd
+                del registers[old_name]
             else:
-                admin.registers[old_name] = new_pwd
-            admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
+                registers[old_name] = new_pwd
+            save_registers(registers, crypto_handler.get_master_password(), self.current_file)
             self.update_message("Usuario y/o contraseña modificados correctamente.")
             self.update_register_display()
             edit_win.destroy()
@@ -420,8 +429,8 @@ class PasswordAdminApp:
         confirm = messagebox.askyesno("Eliminar usuario", f"¿Seguro que deseas eliminar '{self.selected_user}'?")
         if not confirm:
             return
-        del admin.registers[self.selected_user]
-        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
+        del registers[self.selected_user]
+        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message(f"Usuario '{self.selected_user}' eliminado correctamente.")
         self.update_register_display()
 
@@ -429,14 +438,14 @@ class PasswordAdminApp:
         old_pwd = simpledialog.askstring("Cambiar contraseña", f"Ingrese la contraseña actual para '{self.selected_user}':", show='*')
         if not old_pwd:
             return
-        if admin.registers[self.selected_user] != old_pwd:
+        if registers[self.selected_user] != old_pwd:
             self.update_message(f"Contraseña incorrecta para {self.selected_user}.", is_error=True)
             return
         new_pwd = self.request_password_gui("Por favor, ingrese la nueva contraseña.")
         if new_pwd is None:
             return
-        admin.registers[self.selected_user] = new_pwd
-        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
+        registers[self.selected_user] = new_pwd
+        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message("Contraseña cambiada correctamente.")
         self.update_register_display()
 
@@ -444,21 +453,22 @@ class PasswordAdminApp:
         pwd = simpledialog.askstring("Cambiar nombre de usuario", f"Ingrese la contraseña para '{self.selected_user}':", show='*')
         if not pwd:
             return
-        if admin.registers[self.selected_user] != pwd:
+        if registers[self.selected_user] != pwd:
             self.update_message(f"Contraseña incorrecta para {self.selected_user}.", is_error=True)
             return
         new_name = simpledialog.askstring("Cambiar nombre de usuario", "Ingrese el nuevo nombre:")
         if not new_name:
             return
-        if new_name in admin.registers:
+        if new_name in registers:
             self.update_message("El nuevo nombre ya está en uso.", is_error=True)
             return
-        admin.registers[new_name] = admin.registers.pop(self.selected_user)
-        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
+        registers[new_name] = registers.pop(self.selected_user)
+        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message(f"Nombre de usuario cambiado correctamente a '{new_name}'.")
         self.update_register_display()
 
     def select_file_and_reload(self):
+        global registers
         file_path = filedialog.askopenfilename(
             title="Seleccionar archivo de datos encriptado",
             filetypes=[("JSON Encriptado", "*.enc"), ("Todos los archivos", "*.*")]
@@ -471,9 +481,10 @@ class PasswordAdminApp:
             if master_pwd is None:
                 return
             crypto_handler.master_pwd_session = master_pwd
-            registers, status = crypto_handler.load_registers(master_pwd, self.current_file)
+            loaded, status = load_registers(master_pwd, self.current_file)
             if status == "SUCCESS":
-                admin.registers = registers
+                registers.clear()
+                registers.update(loaded)
                 self.password_visibility = {}
                 self.update_register_display()
                 self.update_message(f"Archivo cargado: {os.path.basename(file_path)}")
@@ -486,31 +497,83 @@ class PasswordAdminApp:
             self.current_file_label.config(text=f"Archivo actual: {os.path.basename(self.current_file)}")
 
     def request_password_gui(self, prompt_message="Ingrese la contraseña:"):
+        # Crear ventana oculta para evitar parpadeo
         dialog = tk.Toplevel(self.root)
+        dialog.withdraw()
         dialog.title("Ingresar contraseña")
-        dialog.geometry("400x280")
         dialog.transient(self.root)
         dialog.grab_set()
-        self.center_window(dialog, 400, 280)
 
-        tk.Label(dialog, text=prompt_message).pack(pady=(10, 2))
+        # Frame principal para centrar todo
+        main_frame = tk.Frame(dialog)
+        main_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        tk.Label(main_frame, text=prompt_message).pack(pady=(5, 2))
         pwd_var = tk.StringVar()
-        pwd_entry = tk.Entry(dialog, textvariable=pwd_var, show='*', width=30)
+        pwd_entry = tk.Entry(main_frame, textvariable=pwd_var, show='*', width=30)
         pwd_entry.pack(pady=2)
         pwd_entry.focus_set()
         dialog.bind('<Return>', lambda event: on_ok())
 
-        # Checkbox para omitir verificación de seguridad
         skip_check_var = tk.BooleanVar()
-        skip_checkbox = tk.Checkbutton(dialog, text="No me jodas", variable=skip_check_var)
+        skip_checkbox = tk.Checkbutton(main_frame, text="Si no lo veo, no es ilegal", variable=skip_check_var)
         skip_checkbox.pack(pady=5)
 
-        # Indicador de seguridad
-        strength_label = tk.Label(dialog, text="", font=("Arial", 10, "bold"))
+        # Frame para el gif animado (espacio reservado SIEMPRE)
+        gif_frame = tk.Frame(main_frame, height=150, width=200)
+        gif_frame.pack_propagate(False)
+        gif_frame.pack(pady=2)
+        gif_label = tk.Label(gif_frame)
+        gif_label.pack(expand=True)
+
+        # Cargar los frames del gif animado
+        gif_frames = []
+        gif_path = os.path.join(os.path.dirname(__file__), "homero.gif")
+        try:
+            im = Image.open(gif_path)
+            while True:
+                frame = im.copy().convert("RGBA")
+                frame.thumbnail((150, 150))
+                gif_frames.append(ImageTk.PhotoImage(frame))
+                im.seek(im.tell() + 1)
+        except EOFError:
+            pass
+        except Exception:
+            gif_frames = []
+
+        def show_gif():
+            if not gif_frames:
+                gif_label.config(image='', text='')
+                return
+            if len(gif_frames) == 1:
+                gif_label.config(image=gif_frames[0])
+                gif_label.image = gif_frames[0]
+                return
+            def animate(idx=0):
+                if not skip_check_var.get():
+                    gif_label.config(image='', text='')
+                    return
+                gif_label.config(image=gif_frames[idx])
+                gif_label.image = gif_frames[idx]
+                dialog.after(80, animate, (idx + 1) % len(gif_frames))
+            animate()
+
+        def hide_gif():
+            gif_label.config(image='', text='')
+
+        def on_skip_check(*args):
+            if skip_check_var.get():
+                show_gif()
+            else:
+                hide_gif()
+
+        skip_check_var.trace_add("write", on_skip_check)
+        hide_gif()  # Ocultar gif al inicio
+
+        strength_label = tk.Label(main_frame, text="", font=("Arial", 10, "bold"))
         strength_label.pack(pady=4)
 
-        # Barra de progreso de seguridad
-        progress = ttk.Progressbar(dialog, length=250, mode='determinate', maximum=5)
+        progress = ttk.Progressbar(main_frame, length=250, mode='determinate', maximum=5)
         progress.pack(pady=2)
 
         # Mensaje de criterios
@@ -519,7 +582,7 @@ class PasswordAdminApp:
             f"2. {constants.MIN_UPPERCASE} mayúscula(s), {constants.MIN_LOWERCASE} minúscula(s)\n"
             f"3. {constants.MIN_DIGITS} dígito(s), {constants.MIN_SPECIAL} especial(es)"
         )
-        criteria_label = tk.Label(dialog, text=criteria, fg="gray")
+        criteria_label = tk.Label(main_frame, text=criteria, fg="gray")
         criteria_label.pack(pady=2)
 
         result = {"password": None}
@@ -609,10 +672,17 @@ class PasswordAdminApp:
         def on_cancel():
             dialog.destroy()
 
-        btn_frame = tk.Frame(dialog)
+        btn_frame = tk.Frame(main_frame)
         btn_frame.pack(pady=8)
         tk.Button(btn_frame, text="Aceptar", command=on_ok).pack(side=tk.LEFT, padx=8)
         tk.Button(btn_frame, text="Cancelar", command=on_cancel).pack(side=tk.LEFT, padx=8)
+
+        # Centrar y mostrar la ventana ya armada
+        dialog.update_idletasks()
+        self.center_window(dialog, 400, dialog.winfo_height())
+        dialog.deiconify()
+        dialog.lift()
+        dialog.focus_force()
 
         dialog.bind('<Return>', lambda event: on_ok())
 
@@ -620,26 +690,25 @@ class PasswordAdminApp:
         return result["password"]
 
     def add_user(self):
-        name = simpledialog.askstring("Agregar usuario", "Ingrese el nombre:")
+        name = simpledialog.askstring("Agregar usuario", "Ingrese el nombre:", parent=self.root)
         if not name:
             return
 
-        if name in admin.registers:
+        if name in registers:
             self.update_message("El nombre ya está en uso.", is_error=True)
             return
 
-        opt = messagebox.askyesno("Generar contraseña", "¿Desea generar una contraseña aleatoria?")
+        opt = messagebox.askyesno("Generar contraseña", "¿Desea generar una contraseña aleatoria?", parent=self.root)
         if opt:
             pwd = handler.generate_random_password()
-            messagebox.showinfo("Contraseña generada", f"Contraseña generada: {pwd}")
+            messagebox.showinfo("Contraseña generada", f"Contraseña generada: {pwd}", parent=self.root)
         else:
             pwd = self.request_password_gui()
             if pwd is None:
                 return
 
-        admin.registers[name] = pwd
-        # use password_sesion instead?
-        admin.save_registers(admin.registers, crypto_handler.get_master_password(), self.current_file)
+        registers[name] = pwd
+        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
 
