@@ -15,17 +15,6 @@ TAG_LENGTH = 16
 # Global variable to store the master password for the session
 master_pwd_session = None
 
-def get_master_password() -> str:
-    global master_pwd_session
-    # In the GUI context, this should be set by the GUI application
-    # after prompting the user, rather than using input() here.
-    # This input() is kept for backward compatibility if used without GUI setting the session.
-    if master_pwd_session is None:
-        # This part should ideally be handled by the GUI prompting the user
-        # before any crypto operations that require the master password.
-        pass # The GUI will handle prompting and setting this.
-    return master_pwd_session
-
 def derive_key(master_password: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
@@ -76,12 +65,12 @@ def save_registers(registers: dict, master_password: str, path: str):
         encrypted_data = salt + nonce + ciphertext + encryptor.tag
         with open(path, 'wb') as f:
             f.write(urlsafe_b64encode(encrypted_data))
-        print("Registers encrypted and saved successfully.") # Still prints to console
+        print("Registers encrypted and saved successfully.")
     except FileExistsError:
-        raise FileExistsError(f"File '{path}' already exists")
         print(f"File '{path}' already exists")
+        raise FileExistsError(f"File '{path}' already exists")
     except Exception as e:
-        print(f"Error saving or encrypting data: {e}") # Still prints to console
+        print(f"Error saving or encrypting data: {e}")
 
 def create_empty_registers(master_password: str, path: str):
     """Creates a new, empty encrypted data file."""

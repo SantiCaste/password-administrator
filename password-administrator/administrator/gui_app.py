@@ -410,7 +410,7 @@ class PasswordAdminApp:
                 del registers[old_name]
             else:
                 registers[old_name] = new_pwd
-            save_registers(registers, crypto_handler.get_master_password(), self.current_file)
+            save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
             self.update_message("Usuario y/o contraseña modificados correctamente.")
             self.update_register_display()
             edit_win.destroy()
@@ -430,7 +430,7 @@ class PasswordAdminApp:
         if not confirm:
             return
         del registers[self.selected_user]
-        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
+        save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message(f"Usuario '{self.selected_user}' eliminado correctamente.")
         self.update_register_display()
 
@@ -445,7 +445,7 @@ class PasswordAdminApp:
         if new_pwd is None:
             return
         registers[self.selected_user] = new_pwd
-        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
+        save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Contraseña cambiada correctamente.")
         self.update_register_display()
 
@@ -463,7 +463,7 @@ class PasswordAdminApp:
             self.update_message("El nuevo nombre ya está en uso.", is_error=True)
             return
         registers[new_name] = registers.pop(self.selected_user)
-        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
+        save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message(f"Nombre de usuario cambiado correctamente a '{new_name}'.")
         self.update_register_display()
 
@@ -708,7 +708,7 @@ class PasswordAdminApp:
                 return
 
         registers[name] = pwd
-        save_registers(registers, crypto_handler.get_master_password(), self.current_file)
+        save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
 
