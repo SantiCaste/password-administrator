@@ -1,8 +1,6 @@
 import os
 import re
-import time
 import math
-import signal
 from threading import Thread, Event
 from os.path import abspath
 
@@ -11,7 +9,7 @@ LEAKED_PASS_DIR = "password-administrator/administrator/leaked_passwords/"
 
 def check_brute_force(password, problems, event):
     if(len(password) < MIN_PASS_LEN):
-        problems.append("Tiene pocos carácteres")
+        problems.append("Tiene pocos caracteres")
 
     # Verificar si la contraseña contiene solo letras o solo números
     if password.isalpha():
@@ -72,13 +70,12 @@ def is_leaked_pass(password, problems, event):
     files = [f for f in os.listdir(LEAKED_PASS_DIR)]
     for filename in files:
         if not filename.endswith("txt"):
-            pass
+            continue
         threads.append(Thread(target = search_leaked_pass_in_file, args = (password, problems, LEAKED_PASS_DIR + filename, childEvent,event)))
 
     for x in threads:
         x.start()
 
-    found = False
     for x in threads:
         x.join()
 
