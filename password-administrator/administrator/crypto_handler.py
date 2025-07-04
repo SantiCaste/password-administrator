@@ -71,6 +71,7 @@ def save_registers(registers: dict, master_password: str, path: str):
         raise FileExistsError(f"File '{path}' already exists")
     except Exception as e:
         # print(f"Error saving or encrypting data: {e}")
+        pass
 
 def create_empty_registers(master_password: str, path: str):
     """Creates a new, empty encrypted data file."""
