@@ -7,7 +7,8 @@ from threading import Event
 def generate_random_password():
     """Genera una contraseña aleatoria que cumple todos los criterios de seguridad."""
     chars = string.ascii_letters + string.digits + string.punctuation
-    length = max(constants.RANDOM_PWD_LENGTH, constants.MIN_LENGTH, 12)
+    length = random.randint(constants.MIN_LENGTH, constants.MAX_LENGTH)
+
     max_attempts = 1000
 
     for _ in range(max_attempts):
