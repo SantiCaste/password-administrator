@@ -26,9 +26,10 @@ def generate_random_password():
         pwd += random.choices(chars, k=length - len(pwd))
         random.shuffle(pwd)
         pwd = ''.join(pwd)
-        code, _ = measure_strength(pwd)
-        if code == constants.PWD_STRONG:
+        problems = check_strength(pwd)
+        if len(problems) == 0:
             return pwd
+
     # Si no logra generar una contraseña válida, lanza excepción
     raise Exception("No se pudo generar una contraseña segura tras varios intentos.")
 

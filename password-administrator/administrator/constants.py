@@ -1,5 +1,5 @@
 # Password strength criteria
-MAX_LENGTH = 64
+MAX_LENGTH = 32
 MIN_LENGTH = 16
 MIN_UPPERCASE = 1
 MIN_LOWERCASE = 1
