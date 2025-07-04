@@ -675,27 +675,58 @@ class PasswordAdminApp:
         problems = handler.format_problems(handler.check_strength(registers[self.selected_user]))
 
         win = tk.Toplevel(self.root)
-        win.title("Verificación de fortaleza")
+        if problems.startswith("Problemas:"):
+            win.title("¡Contraseña insegura!")
+        else:
+            win.title("Verificación de fortaleza")
         win.transient(self.root)
         win.grab_set()
         win.resizable(False, False)
 
-        # Ancho fijo para el popup
         popup_width = 420
 
-        # Frame principal centrado
-        frame = tk.Frame(win, padx=30, pady=20)
+        bg_color = "#fff3cd" if problems.startswith("Problemas:") else win.cget("bg")
+        frame = tk.Frame(win, padx=30, pady=20, bg=bg_color)
         frame.pack(expand=True, fill="both")
 
-        # Mostrar todo el mensaje en un solo label, centrado y con wrap
-        label = tk.Label(
-            frame,
-            text=problems,
-            justify="center",
-            anchor="center",
-            wraplength=popup_width - 40
-        )
-        label.pack(pady=(0, 15), fill="x")
+        # Separar la primera línea ("Problemas:") del resto
+        if problems.startswith("Problemas:"):
+            # Cambia el ícono a warning si hay problemas
+            try:
+                win.iconbitmap('warning.ico')  # Si tienes un ícono de advertencia, opcional
+            except Exception:
+                pass
+            lines = problems.split('\n', 1)
+            label_title = tk.Label(
+                frame,
+                text=lines[0],
+                fg="red",
+                bg=bg_color,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label_title.pack(pady=(0, 5), fill="x")
+            rest_text = lines[1] if len(lines) > 1 else ""
+            label_rest = tk.Label(
+                frame,
+                text=rest_text.strip(),
+                bg=bg_color,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label_rest.pack(pady=(0, 15), fill="x")
+        else:
+            # Si no hay problemas, mostrar todo normal
+            label = tk.Label(
+                frame,
+                text=problems,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label.pack(pady=(0, 15), fill="x")
 
         btn = ttk.Button(frame, text="Aceptar", command=win.destroy)
         btn.pack(pady=(15, 0))
