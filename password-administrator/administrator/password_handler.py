@@ -5,11 +5,31 @@ from threading import Event
 
 
 def generate_random_password():
-    pwd = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=constants.RANDOM_PWD_LENGTH))
-    while measure_strength(pwd)[0] != constants.PWD_STRONG:
-        pwd = ''.join(random.choices(string.ascii_letters + string.digits + string.punctuation, k=constants.RANDOM_PWD_LENGTH))
-    
-    return pwd
+    """Genera una contraseña aleatoria que cumple todos los criterios de seguridad."""
+    chars = string.ascii_letters + string.digits + string.punctuation
+    length = max(constants.RANDOM_PWD_LENGTH, constants.MIN_LENGTH, 12)
+    max_attempts = 1000
+
+    for _ in range(max_attempts):
+        # Garantiza al menos un carácter de cada tipo requerido
+        pwd = [
+            random.choice(string.ascii_uppercase) for _ in range(constants.MIN_UPPERCASE)
+        ] + [
+            random.choice(string.ascii_lowercase) for _ in range(constants.MIN_LOWERCASE)
+        ] + [
+            random.choice(string.digits) for _ in range(constants.MIN_DIGITS)
+        ] + [
+            random.choice(string.punctuation) for _ in range(constants.MIN_SPECIAL)
+        ]
+        # Completa el resto con caracteres aleatorios
+        pwd += random.choices(chars, k=length - len(pwd))
+        random.shuffle(pwd)
+        pwd = ''.join(pwd)
+        code, _ = measure_strength(pwd)
+        if code == constants.PWD_STRONG:
+            return pwd
+    # Si no logra generar una contraseña válida, lanza excepción
+    raise Exception("No se pudo generar una contraseña segura tras varios intentos.")
 
 # measure password strength considering length and complexity
 def measure_strength(password: str) -> tuple:
