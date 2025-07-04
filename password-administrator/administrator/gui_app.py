@@ -28,8 +28,8 @@ class PasswordAdminApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Administrador de Contraseñas")
-        self.root.geometry("600x450")
-        self.center_window(self.root, 600, 450)
+        self.root.geometry("800x650")
+        self.center_window(self.root, 800, 650)
         self.root.lift()
         self.root.focus_force()
         self.password_visibility = {} 
@@ -506,7 +506,6 @@ class PasswordAdminApp:
         skip_checkbox = tk.Checkbutton(main_frame, text="Si no lo veo, no es ilegal", variable=skip_check_var)
         skip_checkbox.pack(pady=5)
 
-        # Frame para el gif animado (espacio reservado SIEMPRE)
         gif_frame = tk.Frame(main_frame, height=150, width=200)
         gif_frame.pack_propagate(False)
         gif_frame.pack(pady=2)
@@ -666,7 +665,6 @@ class PasswordAdminApp:
                 return
 
         registers[name] = pwd
-        print(crypto_handler.master_pwd_session)
         save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Usuario registrado correctamente.")
         self.update_register_display()
@@ -676,15 +674,43 @@ class PasswordAdminApp:
             return
         problems = handler.format_problems(handler.check_strength(registers[self.selected_user]))
 
-        win = tk.Toplevel()
-        win.wm_title("Window")
+        win = tk.Toplevel(self.root)
+        win.title("Verificación de fortaleza")
+        win.transient(self.root)
+        win.grab_set()
+        win.resizable(False, False)
 
-        l = tk.Label(win, text=problems)
-        l.grid(row=0, column=0)
+        # Ancho fijo para el popup
+        popup_width = 420
 
-        b = ttk.Button(win, text="Okay", command=win.destroy)
-        b.grid(row=1, column=0)
+        # Frame principal centrado
+        frame = tk.Frame(win, padx=30, pady=20)
+        frame.pack(expand=True, fill="both")
 
+        # Mostrar todo el mensaje en un solo label, centrado y con wrap
+        label = tk.Label(
+            frame,
+            text=problems,
+            justify="center",
+            anchor="center",
+            wraplength=popup_width - 40
+        )
+        label.pack(pady=(0, 15), fill="x")
+
+        btn = ttk.Button(frame, text="Aceptar", command=win.destroy)
+        btn.pack(pady=(15, 0))
+
+        # Centrar ventana respecto a la principal y fijar ancho
+        win.update_idletasks()
+        w, h = popup_width, win.winfo_height()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (w // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (h // 2)
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
+        btn.focus_set()
+        win.bind('<Return>', lambda event: win.destroy())
+
+        # Mensaje azul centrado en la ventana principal
         self.update_message(problems)
         self.update_register_display()
 

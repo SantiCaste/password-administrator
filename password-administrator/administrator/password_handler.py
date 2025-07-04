@@ -36,14 +36,7 @@ def measure_strength(password: str) -> tuple:
     if sum(c in string.punctuation for c in password) < constants.MIN_SPECIAL:
         return (constants.PWD_MUST_SPECIAL, score)
 
-def print_password_criteria():
-    print("\n=== Password Criteria ===")
-    print(f"1. Minimum length: {constants.MIN_LENGTH} characters")
-    print(f"2. At least {constants.MIN_UPPERCASE} uppercase letter(s)")
-    print(f"3. At least {constants.MIN_LOWERCASE} lowercase letter(s)")
-    print(f"4. At least {constants.MIN_DIGITS} digit(s)")
-    print(f"5. At least {constants.MIN_SPECIAL} special character(s)\n")
-     # If all criteria are met
+    # If all criteria are met
     return (constants.PWD_STRONG, score)
 
 # Returns an array with the passwords problems
@@ -65,8 +58,6 @@ def format_problems(problems: str) -> str:
     else:
         output = "Problemas:"
         for p in problems:
-            output += "\n\t" + p
-        output+="\n"
-
+            output += "\n" + p  
+        output += "\n"
     return output
-   

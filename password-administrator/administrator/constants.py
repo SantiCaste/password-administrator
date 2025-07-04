@@ -17,10 +17,10 @@ PWD_MUST_SPECIAL = 5
 
 
 PWD_VALIDATION_MESSAGES = {
-    PWD_STRONG: "Password meets all criteria.",
-    PWD_MUST_MIN_LENGTH: f"Password must be at least {MIN_LENGTH} characters long.",
-    PWD_MUST_UPPERCASE: f"Password must contain at least {MIN_UPPERCASE} uppercase letter(s).",
-    PWD_MUST_LOWERCASE: f"Password must contain at least {MIN_LOWERCASE} lowercase letter(s).",
-    PWD_MUST_DIGITS: f"Password must contain at least {MIN_DIGITS} digit(s).",
-    PWD_MUST_SPECIAL: f"Password must contain at least {MIN_SPECIAL} special character(s)."
+    PWD_STRONG: "La contraseña cumple con todos los criterios.",
+    PWD_MUST_MIN_LENGTH: f"La contraseña debe tener al menos {MIN_LENGTH} caracteres.",
+    PWD_MUST_UPPERCASE: f"La contraseña debe contener al menos {MIN_UPPERCASE} letra(s) mayúscula(s).",
+    PWD_MUST_LOWERCASE: f"La contraseña debe contener al menos {MIN_LOWERCASE} letra(s) minúscula(s).",
+    PWD_MUST_DIGITS: f"La contraseña debe contener al menos {MIN_DIGITS} dígito(s).",
+    PWD_MUST_SPECIAL: f"La contraseña debe contener al menos {MIN_SPECIAL} carácter(es) especial(es)."
 }
