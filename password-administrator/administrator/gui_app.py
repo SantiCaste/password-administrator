@@ -225,6 +225,8 @@ class PasswordAdminApp:
         self.delete_btn = tk.Button(button_frame, text="Eliminar usuario", command=self.delete_selected_user, state=tk.DISABLED)
         self.delete_btn.pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Seleccionar archivo...", command=self.select_file_and_reload).pack(side=tk.LEFT, padx=5)
+        self.str_btn = tk.Button(button_frame, text="Verificar fuerza", command=self.check_strength, state=tk.DISABLED)
+        self.str_btn.pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Salir", command=self.root.quit).pack(side=tk.LEFT, padx=5)
 
         self.message_label = tk.Label(self.root, text="", fg="blue")
@@ -261,6 +263,7 @@ class PasswordAdminApp:
             self.tree.insert("", tk.END, iid=user, values=(user, pwd_display))
         self.modify_btn.config(state=tk.DISABLED)
         self.delete_btn.config(state=tk.DISABLED)
+        self.str_btn.config(state=tk.DISABLED)
         self.show_password_btn.config(state=tk.DISABLED)
         self.selected_user = None
 
@@ -270,6 +273,7 @@ class PasswordAdminApp:
             self.selected_user = selection[0]
             self.modify_btn.config(state=tk.NORMAL)
             self.delete_btn.config(state=tk.NORMAL)
+            self.str_btn.config(state=tk.NORMAL)
             self.show_password_btn.config(state=tk.NORMAL)
             show = self.password_visibility.get(self.selected_user, False)
             self.show_password_btn.config(text="Ocultar contraseña" if show else "Mostrar contraseña")
@@ -277,6 +281,7 @@ class PasswordAdminApp:
             self.selected_user = None
             self.modify_btn.config(state=tk.DISABLED)
             self.delete_btn.config(state=tk.DISABLED)
+            self.str_btn.config(state=tk.DISABLED)
             self.show_password_btn.config(state=tk.DISABLED)
 
     def toggle_password(self):
@@ -664,6 +669,23 @@ class PasswordAdminApp:
         print(crypto_handler.master_pwd_session)
         save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Usuario registrado correctamente.")
+        self.update_register_display()
+
+    def check_strength(self):
+        if not self.selected_user:
+            return
+        problems = handler.format_problems(handler.check_strength(registers[self.selected_user]))
+
+        win = tk.Toplevel()
+        win.wm_title("Window")
+
+        l = tk.Label(win, text=problems)
+        l.grid(row=0, column=0)
+
+        b = ttk.Button(win, text="Okay", command=win.destroy)
+        b.grid(row=1, column=0)
+
+        self.update_message(problems)
         self.update_register_display()
 
 if __name__ == "__main__":
