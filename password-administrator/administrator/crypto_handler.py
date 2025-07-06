@@ -65,12 +65,13 @@ def save_registers(registers: dict, master_password: str, path: str):
         encrypted_data = salt + nonce + ciphertext + encryptor.tag
         with open(path, 'wb') as f:
             f.write(urlsafe_b64encode(encrypted_data))
-        print("Registers encrypted and saved successfully.")
+        # print("Registers encrypted and saved successfully.")
     except FileExistsError:
-        print(f"File '{path}' already exists")
+        # print(f"File '{path}' already exists")
         raise FileExistsError(f"File '{path}' already exists")
     except Exception as e:
-        print(f"Error saving or encrypting data: {e}")
+        # print(f"Error saving or encrypting data: {e}")
+        pass
 
 def create_empty_registers(master_password: str, path: str):
     """Creates a new, empty encrypted data file."""

@@ -28,8 +28,8 @@ class PasswordAdminApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Administrador de Contraseñas")
-        self.root.geometry("600x450")
-        self.center_window(self.root, 600, 450)
+        self.root.geometry("800x650")
+        self.center_window(self.root, 800, 650)
         self.root.lift()
         self.root.focus_force()
         self.password_visibility = {} 
@@ -225,6 +225,8 @@ class PasswordAdminApp:
         self.delete_btn = tk.Button(button_frame, text="Eliminar usuario", command=self.delete_selected_user, state=tk.DISABLED)
         self.delete_btn.pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Seleccionar archivo...", command=self.select_file_and_reload).pack(side=tk.LEFT, padx=5)
+        self.str_btn = tk.Button(button_frame, text="Verificar fuerza", command=self.check_strength, state=tk.DISABLED)
+        self.str_btn.pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Salir", command=self.root.quit).pack(side=tk.LEFT, padx=5)
 
         self.message_label = tk.Label(self.root, text="", fg="blue")
@@ -261,6 +263,7 @@ class PasswordAdminApp:
             self.tree.insert("", tk.END, iid=user, values=(user, pwd_display))
         self.modify_btn.config(state=tk.DISABLED)
         self.delete_btn.config(state=tk.DISABLED)
+        self.str_btn.config(state=tk.DISABLED)
         self.show_password_btn.config(state=tk.DISABLED)
         self.selected_user = None
 
@@ -270,6 +273,7 @@ class PasswordAdminApp:
             self.selected_user = selection[0]
             self.modify_btn.config(state=tk.NORMAL)
             self.delete_btn.config(state=tk.NORMAL)
+            self.str_btn.config(state=tk.NORMAL)
             self.show_password_btn.config(state=tk.NORMAL)
             show = self.password_visibility.get(self.selected_user, False)
             self.show_password_btn.config(text="Ocultar contraseña" if show else "Mostrar contraseña")
@@ -277,6 +281,7 @@ class PasswordAdminApp:
             self.selected_user = None
             self.modify_btn.config(state=tk.DISABLED)
             self.delete_btn.config(state=tk.DISABLED)
+            self.str_btn.config(state=tk.DISABLED)
             self.show_password_btn.config(state=tk.DISABLED)
 
     def toggle_password(self):
@@ -501,7 +506,6 @@ class PasswordAdminApp:
         skip_checkbox = tk.Checkbutton(main_frame, text="Si no lo veo, no es ilegal", variable=skip_check_var)
         skip_checkbox.pack(pady=5)
 
-        # Frame para el gif animado (espacio reservado SIEMPRE)
         gif_frame = tk.Frame(main_frame, height=150, width=200)
         gif_frame.pack_propagate(False)
         gif_frame.pack(pady=2)
@@ -661,9 +665,84 @@ class PasswordAdminApp:
                 return
 
         registers[name] = pwd
-        print(crypto_handler.master_pwd_session)
         save_registers(registers, crypto_handler.master_pwd_session, self.current_file)
         self.update_message("Usuario registrado correctamente.")
+        self.update_register_display()
+
+    def check_strength(self):
+        if not self.selected_user:
+            return
+        problems = handler.format_problems(handler.check_strength(registers[self.selected_user]))
+
+        win = tk.Toplevel(self.root)
+        if problems.startswith("Problemas:"):
+            win.title("¡Contraseña insegura!")
+        else:
+            win.title("Verificación de fortaleza")
+        win.transient(self.root)
+        win.grab_set()
+        win.resizable(False, False)
+
+        popup_width = 420
+
+        bg_color = "#fff3cd" if problems.startswith("Problemas:") else win.cget("bg")
+        frame = tk.Frame(win, padx=30, pady=20, bg=bg_color)
+        frame.pack(expand=True, fill="both")
+
+        # Separar la primera línea ("Problemas:") del resto
+        if problems.startswith("Problemas:"):
+            # Cambia el ícono a warning si hay problemas
+            try:
+                win.iconbitmap('warning.ico')  # Si tienes un ícono de advertencia, opcional
+            except Exception:
+                pass
+            lines = problems.split('\n', 1)
+            label_title = tk.Label(
+                frame,
+                text=lines[0],
+                fg="red",
+                bg=bg_color,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label_title.pack(pady=(0, 5), fill="x")
+            rest_text = lines[1] if len(lines) > 1 else ""
+            label_rest = tk.Label(
+                frame,
+                text=rest_text.strip(),
+                bg=bg_color,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label_rest.pack(pady=(0, 15), fill="x")
+        else:
+            # Si no hay problemas, mostrar todo normal
+            label = tk.Label(
+                frame,
+                text=problems,
+                justify="center",
+                anchor="center",
+                wraplength=popup_width - 40
+            )
+            label.pack(pady=(0, 15), fill="x")
+
+        btn = ttk.Button(frame, text="Aceptar", command=win.destroy)
+        btn.pack(pady=(15, 0))
+
+        # Centrar ventana respecto a la principal y fijar ancho
+        win.update_idletasks()
+        w, h = popup_width, win.winfo_height()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (w // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (h // 2)
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
+        btn.focus_set()
+        win.bind('<Return>', lambda event: win.destroy())
+
+        # Mensaje azul centrado en la ventana principal
+        self.update_message(problems)
         self.update_register_display()
 
 if __name__ == "__main__":

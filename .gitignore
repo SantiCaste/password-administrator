@@ -1,2 +1,8 @@
 __pycache__/
 *.enc
+password-administrator/administrator/leaked_passwords/*
+
+# Exceptions
+!.keep
+!password-administrator/administrator/leaked_passwords/worst_passwords.txt
+!password-administrator/administrator/leaked_passwords/xato-net-10-million-passwords-1000000.txt
