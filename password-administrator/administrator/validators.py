@@ -1,6 +1,7 @@
 import os
 import re
 import math
+import string
 from threading import Thread, Event
 from os.path import abspath
 
@@ -80,11 +81,31 @@ def is_leaked_pass(password, problems, event):
         x.join()
 
 def calculate_entropy(password, problems, event):
-    characters      = set(password)
+    charset_size = 0
+
+    # Verificar qué tipos de caracteres están presentes en la contraseña para estimar el alfabeto
+    if any(c in string.ascii_lowercase for c in password):
+        charset_size += len(string.ascii_lowercase)
+    if any(c in string.ascii_uppercase for c in password):
+        charset_size += len(string.ascii_uppercase)
+    if any(c in string.digits for c in password):
+        charset_size += len(string.digits)
+    if any(c in string.punctuation for c in password):
+        charset_size += len(string.punctuation)
+
+    # Si la contraseña no contiene ningún tipo de los caracteres comunes,
+    # establecemos un tamaño mínimo de alfabeto para evitar errores (log2(0) o log2(1) = 0)
+    # Esto es una simplificación, ya que una contraseña podría usar caracteres Unicode raros.
+    if charset_size == 0:
+        charset_size = 1 # Evitar logaritmo de cero, aunque esto implicaría una contraseña de 0 entropía
+
     password_length = len(password)
-    character_count = len(characters)
-    
-    entropy = password_length * math.log2(character_count)
+
+    # Entropía = Longitud de la Contraseña * log2(Tamaño del Alfabeto Posible)
+    if charset_size > 1: 
+        entropy = password_length * math.log2(charset_size)
+    else:
+        entropy = 0
     
     if entropy < 60:
         problems.append("La contraseña tiene baja entropía")
